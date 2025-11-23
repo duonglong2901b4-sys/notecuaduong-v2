@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Note Của Dương - Phiên bản Mới</title>
+<style>
+  body {
+    margin: 0; background: linear-gradient(120deg, #f6d365, #fda085);
+    height: 100vh; overflow: hidden;
+    font-family: "Segoe UI", sans-serif;
+  }
+  #board { position: relative; width: 100%; height: 100%; }
+  .note {
+    position: absolute; width: 200px; min-height: 130px;
+    padding: 10px; border-radius: 10px; color: #333;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+    cursor: move; white-space: pre-wrap; overflow-wrap: break-word;
+  }
+  .note textarea {
+    width: 100%; height: 100%; border: none; outline: none;
+    background: transparent; resize: none; font-size: 16px;
+  }
+  #addBtn {
+    position: fixed; bottom: 25px; right: 25px;
+    background: #ff4081; color: white; border: none;
+    border-radius: 50%; width: 65px; height: 65px;
+    font-size: 38px; cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+  }
+  #header {
+    text-align: center; color: white; padding: 10px; font-size: 22px;
+    font-weight: bold; background: rgba(0,0,0,0.25);
+  }
+</style>
+</head>
+<body>
+  <div id="header">🌈 Note Của Dương - Phiên bản Mới</div>
+  <div id="board"></div>
+  <button id="addBtn">+</button>
+
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "notecuaduong.firebaseapp.com",
+      projectId: "notecuaduong",
+      storageBucket: "notecuaduong.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const board=document.getElementById('board');
+    const addBtn=document.getElementById('addBtn');
+    const colors=['#FFEB3B','#FFCDD2','#C5E1A5','#B3E5FC','#D1C4E9','#FFF59D','#F8BBD0'];
+
+    addBtn.onclick=async()=>{
+      const note={
+        text:'',
+        x:Math.random()*(window.innerWidth-220),
+        y:Math.random()*(window.innerHeight-220),
+        color:colors[Math.floor(Math.random()*colors.length)]
+      };
+      const docRef=await db.collection('notes_v2').add(note);
+      createNoteElement(docRef.id,note);
+    };
+
+    function createNoteElement(id,data){
+      const div=document.createElement('div');
+      div.className='note';
+      div.style.background=data.color;
+      div.style.left=data.x+'px';
+      div.style.top=data.y+'px';
+      div.innerHTML=`<textarea>${data.text}</textarea>`;
+      board.appendChild(div);
+
+      const textarea=div.querySelector('textarea');
+      let isDragging=false,offsetX,offsetY;
+
+      textarea.addEventListener('input',()=>db.collection('notes_v2').doc(id).update({text:textarea.value}));
+
+      div.addEventListener('mousedown',(e)=>{
+        if(e.target===textarea)return;
+        isDragging=true;offsetX=e.offsetX;offsetY=e.offsetY;
+      });
+      document.addEventListener('mousemove',(e)=>{
+        if(!isDragging)return;
+        div.style.left=(e.pageX-offsetX)+'px';
+        div.style.top=(e.pageY-offsetY)+'px';
+      });
+      document.addEventListener('mouseup',async()=>{
+        if(isDragging){
+          isDragging=false;
+          await db.collection('notes_v2').doc(id).update({
+            x:parseFloat(div.style.left),
+            y:parseFloat(div.style.top)
+          });
+        }
+      });
+    }
+
+    db.collection('notes_v2').onSnapshot(snapshot=>{
+      board.innerHTML='';
+      snapshot.forEach(doc=>createNoteElement(doc.id,doc.data()));
+    });
+  </script>
+</body>
+</html>
