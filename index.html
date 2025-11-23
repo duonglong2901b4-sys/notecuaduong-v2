@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Note Của Dương - Phiên bản Mới</title>
+  <title>Note Của Dương - Phiên bản Màu Sắc</title>
   <style>
     body {
       background: linear-gradient(120deg, #ffcc70, #ff9966);
@@ -14,41 +14,49 @@
     }
     .note {
       position: absolute;
-      background: #fff7c0;
       border-radius: 10px;
       width: 240px;
       min-height: 140px;
       box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
       display: flex;
       flex-direction: column;
+      user-select: none;
+      touch-action: none;
+      transition: transform 0.1s;
+    }
+    .note.dragging {
+      transform: scale(1.05);
+      opacity: 0.8;
     }
     .note-title {
-      background: #ffe082;
       font-weight: bold;
       padding: 6px;
-      border-bottom: 1px solid #e0c36d;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
       cursor: text;
       border-top-left-radius: 10px;
       border-top-right-radius: 10px;
+      background: rgba(255,255,255,0.4);
     }
     .note-content {
       padding: 8px;
       flex: 1;
       cursor: text;
       overflow: auto;
+      background: rgba(255,255,255,0.3);
     }
     .add-button {
       position: fixed;
       right: 20px;
       bottom: 20px;
-      width: 50px;
-      height: 50px;
+      width: 55px;
+      height: 55px;
       border-radius: 50%;
       border: none;
       background: #ff4081;
       color: white;
-      font-size: 30px;
+      font-size: 32px;
       cursor: pointer;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.2);
     }
   </style>
 </head>
@@ -57,13 +65,20 @@
     const container = document.body;
     let notes = JSON.parse(localStorage.getItem("notes")) || [];
 
+    const colors = ["#FFB6C1", "#FFD700", "#ADFF2F", "#87CEFA", "#FFA07A", "#E6E6FA", "#98FB98"];
+
     function saveNotes() {
       localStorage.setItem("notes", JSON.stringify(notes));
     }
 
-    function createNote(title = "", content = "", x = 50, y = 50) {
+    function randomColor() {
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    function createNote(title = "", content = "", x = 60, y = 60, color = randomColor()) {
       const note = document.createElement("div");
       note.className = "note";
+      note.style.background = color;
 
       const titleDiv = document.createElement("div");
       titleDiv.className = "note-title";
@@ -78,36 +93,50 @@
       note.appendChild(titleDiv);
       note.appendChild(contentDiv);
 
-      const randomX = x + Math.random() * 80;
-      const randomY = y + Math.random() * 80;
+      const offset = 80;
+      const randomX = x + Math.random() * offset;
+      const randomY = y + Math.random() * offset;
       note.style.left = randomX + "px";
       note.style.top = randomY + "px";
 
-      let isDragging = false;
-      let offsetX = 0, offsetY = 0;
+      let isDragging = false, offsetX = 0, offsetY = 0;
 
-      note.addEventListener("mousedown", e => {
-        if (e.target.classList.contains("note-title") || e.target.classList.contains("note-content")) return;
+      function startDrag(e) {
         isDragging = true;
-        offsetX = e.offsetX;
-        offsetY = e.offsetY;
-        note.style.zIndex = 1000;
-      });
+        note.classList.add("dragging");
+        offsetX = e.touches ? e.touches[0].clientX - note.offsetLeft : e.offsetX;
+        offsetY = e.touches ? e.touches[0].clientY - note.offsetTop : e.offsetY;
+      }
 
-      document.addEventListener("mouseup", () => (isDragging = false));
-      document.addEventListener("mousemove", e => {
+      function drag(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        note.style.left = clientX - offsetX + "px";
+        note.style.top = clientY - offsetY + "px";
+      }
+
+      function endDrag() {
         if (isDragging) {
-          note.style.left = e.pageX - offsetX + "px";
-          note.style.top = e.pageY - offsetY + "px";
+          isDragging = false;
+          note.classList.remove("dragging");
           updateNotes();
         }
-      });
+      }
+
+      note.addEventListener("mousedown", startDrag);
+      note.addEventListener("touchstart", startDrag);
+      document.addEventListener("mousemove", drag);
+      document.addEventListener("touchmove", drag);
+      document.addEventListener("mouseup", endDrag);
+      document.addEventListener("touchend", endDrag);
 
       titleDiv.addEventListener("input", updateNotes);
       contentDiv.addEventListener("input", updateNotes);
 
       container.appendChild(note);
-      notes.push({ title, content, x: randomX, y: randomY });
+      notes.push({ title, content, x: randomX, y: randomY, color });
       saveNotes();
     }
 
@@ -117,7 +146,8 @@
         title: n.querySelector(".note-title").innerText,
         content: n.querySelector(".note-content").innerText,
         x: parseFloat(n.style.left),
-        y: parseFloat(n.style.top)
+        y: parseFloat(n.style.top),
+        color: n.style.background
       }));
       saveNotes();
     }
@@ -128,7 +158,7 @@
     addButton.onclick = () => createNote();
     container.appendChild(addButton);
 
-    notes.forEach(n => createNote(n.title, n.content, n.x, n.y));
+    notes.forEach(n => createNote(n.title, n.content, n.x, n.y, n.color));
   </script>
 </body>
 </html>
