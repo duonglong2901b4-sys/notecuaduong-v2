@@ -25,21 +25,24 @@ function createNote(title = "", content = "", x = 50, y = 50) {
   note.appendChild(titleDiv);
   note.appendChild(contentDiv);
 
-  // Vị trí ngẫu nhiên tránh đè
-  const randomX = x + Math.random() * 100;
-  const randomY = y + Math.random() * 100;
+  // Vị trí ngẫu nhiên
+  const randomX = x + Math.random() * 80;
+  const randomY = y + Math.random() * 80;
   note.style.left = randomX + "px";
   note.style.top = randomY + "px";
 
   // Kéo thả
-  let isDragging = false, offsetX, offsetY;
+  let isDragging = false;
+  let offsetX = 0, offsetY = 0;
+
   note.addEventListener("mousedown", e => {
-    if (e.target === titleDiv || e.target === contentDiv) return;
+    if (e.target.classList.contains("note-title") || e.target.classList.contains("note-content")) return;
     isDragging = true;
     offsetX = e.offsetX;
     offsetY = e.offsetY;
     note.style.zIndex = 1000;
   });
+
   document.addEventListener("mouseup", () => (isDragging = false));
   document.addEventListener("mousemove", e => {
     if (isDragging) {
@@ -49,7 +52,6 @@ function createNote(title = "", content = "", x = 50, y = 50) {
     }
   });
 
-  // Khi chỉnh sửa nội dung
   titleDiv.addEventListener("input", updateNotes);
   contentDiv.addEventListener("input", updateNotes);
 
@@ -81,14 +83,16 @@ const style = document.createElement("style");
 style.innerHTML = `
 body {
   background: linear-gradient(120deg, #ffcc70, #ff9966);
-  height:100vh; overflow:hidden; margin:0;
+  height:100vh;
+  overflow:hidden;
+  margin:0;
 }
 .note {
   position:absolute;
-  background:#fff5b7;
+  background:#fff7c0;
   border-radius:10px;
-  width:220px;
-  min-height:130px;
+  width:240px;
+  min-height:140px;
   box-shadow:0 3px 6px rgba(0,0,0,0.2);
   font-family:sans-serif;
   cursor:move;
