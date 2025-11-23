@@ -1,135 +1,134 @@
-<script>
-const container = document.body;
-let notes = JSON.parse(localStorage.getItem("notes")) || [];
-
-function saveNotes() {
-  localStorage.setItem("notes", JSON.stringify(notes));
-}
-
-function createNote(title = "", content = "", x = 50, y = 50) {
-  const note = document.createElement("div");
-  note.className = "note";
-
-  // Tiêu đề
-  const titleDiv = document.createElement("div");
-  titleDiv.className = "note-title";
-  titleDiv.contentEditable = "true";
-  titleDiv.innerText = title || "Tiêu đề...";
-
-  // Nội dung
-  const contentDiv = document.createElement("div");
-  contentDiv.className = "note-content";
-  contentDiv.contentEditable = "true";
-  contentDiv.innerText = content || "Nội dung...";
-
-  note.appendChild(titleDiv);
-  note.appendChild(contentDiv);
-
-  // Vị trí ngẫu nhiên
-  const randomX = x + Math.random() * 80;
-  const randomY = y + Math.random() * 80;
-  note.style.left = randomX + "px";
-  note.style.top = randomY + "px";
-
-  // Kéo thả
-  let isDragging = false;
-  let offsetX = 0, offsetY = 0;
-
-  note.addEventListener("mousedown", e => {
-    if (e.target.classList.contains("note-title") || e.target.classList.contains("note-content")) return;
-    isDragging = true;
-    offsetX = e.offsetX;
-    offsetY = e.offsetY;
-    note.style.zIndex = 1000;
-  });
-
-  document.addEventListener("mouseup", () => (isDragging = false));
-  document.addEventListener("mousemove", e => {
-    if (isDragging) {
-      note.style.left = e.pageX - offsetX + "px";
-      note.style.top = e.pageY - offsetY + "px";
-      updateNotes();
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Note Của Dương - Phiên bản Mới</title>
+  <style>
+    body {
+      background: linear-gradient(120deg, #ffcc70, #ff9966);
+      height: 100vh;
+      overflow: hidden;
+      margin: 0;
+      font-family: sans-serif;
     }
-  });
+    .note {
+      position: absolute;
+      background: #fff7c0;
+      border-radius: 10px;
+      width: 240px;
+      min-height: 140px;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+    }
+    .note-title {
+      background: #ffe082;
+      font-weight: bold;
+      padding: 6px;
+      border-bottom: 1px solid #e0c36d;
+      cursor: text;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+    }
+    .note-content {
+      padding: 8px;
+      flex: 1;
+      cursor: text;
+      overflow: auto;
+    }
+    .add-button {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: none;
+      background: #ff4081;
+      color: white;
+      font-size: 30px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    const container = document.body;
+    let notes = JSON.parse(localStorage.getItem("notes")) || [];
 
-  titleDiv.addEventListener("input", updateNotes);
-  contentDiv.addEventListener("input", updateNotes);
+    function saveNotes() {
+      localStorage.setItem("notes", JSON.stringify(notes));
+    }
 
-  container.appendChild(note);
-  notes.push({ title, content, x: randomX, y: randomY });
-  saveNotes();
-}
+    function createNote(title = "", content = "", x = 50, y = 50) {
+      const note = document.createElement("div");
+      note.className = "note";
 
-function updateNotes() {
-  const allNotes = document.querySelectorAll(".note");
-  notes = Array.from(allNotes).map(n => ({
-    title: n.querySelector(".note-title").innerText,
-    content: n.querySelector(".note-content").innerText,
-    x: parseFloat(n.style.left),
-    y: parseFloat(n.style.top)
-  }));
-  saveNotes();
-}
+      const titleDiv = document.createElement("div");
+      titleDiv.className = "note-title";
+      titleDiv.contentEditable = "true";
+      titleDiv.innerText = title || "Tiêu đề...";
 
-// Nút thêm note
-const addButton = document.createElement("button");
-addButton.innerText = "+";
-addButton.className = "add-button";
-addButton.onclick = () => createNote();
-container.appendChild(addButton);
+      const contentDiv = document.createElement("div");
+      contentDiv.className = "note-content";
+      contentDiv.contentEditable = "true";
+      contentDiv.innerText = content || "Nội dung...";
 
-// CSS
-const style = document.createElement("style");
-style.innerHTML = `
-body {
-  background: linear-gradient(120deg, #ffcc70, #ff9966);
-  height:100vh;
-  overflow:hidden;
-  margin:0;
-}
-.note {
-  position:absolute;
-  background:#fff7c0;
-  border-radius:10px;
-  width:240px;
-  min-height:140px;
-  box-shadow:0 3px 6px rgba(0,0,0,0.2);
-  font-family:sans-serif;
-  cursor:move;
-  display:flex;
-  flex-direction:column;
-}
-.note-title {
-  background:#ffe082;
-  font-weight:bold;
-  padding:6px;
-  border-bottom:1px solid #e0c36d;
-  cursor:text;
-  border-top-left-radius:10px;
-  border-top-right-radius:10px;
-}
-.note-content {
-  padding:8px;
-  flex:1;
-  cursor:text;
-  overflow:auto;
-}
-.add-button {
-  position:fixed;
-  right:20px;
-  bottom:20px;
-  width:50px;
-  height:50px;
-  border-radius:50%;
-  border:none;
-  background:#ff4081;
-  color:white;
-  font-size:30px;
-  cursor:pointer;
-}
-`;
-document.head.appendChild(style);
+      note.appendChild(titleDiv);
+      note.appendChild(contentDiv);
 
-// Load lại note cũ
-notes.forEach(n => createNote(n.title, n.content, n.x, n.y));
-</script>
+      const randomX = x + Math.random() * 80;
+      const randomY = y + Math.random() * 80;
+      note.style.left = randomX + "px";
+      note.style.top = randomY + "px";
+
+      let isDragging = false;
+      let offsetX = 0, offsetY = 0;
+
+      note.addEventListener("mousedown", e => {
+        if (e.target.classList.contains("note-title") || e.target.classList.contains("note-content")) return;
+        isDragging = true;
+        offsetX = e.offsetX;
+        offsetY = e.offsetY;
+        note.style.zIndex = 1000;
+      });
+
+      document.addEventListener("mouseup", () => (isDragging = false));
+      document.addEventListener("mousemove", e => {
+        if (isDragging) {
+          note.style.left = e.pageX - offsetX + "px";
+          note.style.top = e.pageY - offsetY + "px";
+          updateNotes();
+        }
+      });
+
+      titleDiv.addEventListener("input", updateNotes);
+      contentDiv.addEventListener("input", updateNotes);
+
+      container.appendChild(note);
+      notes.push({ title, content, x: randomX, y: randomY });
+      saveNotes();
+    }
+
+    function updateNotes() {
+      const allNotes = document.querySelectorAll(".note");
+      notes = Array.from(allNotes).map(n => ({
+        title: n.querySelector(".note-title").innerText,
+        content: n.querySelector(".note-content").innerText,
+        x: parseFloat(n.style.left),
+        y: parseFloat(n.style.top)
+      }));
+      saveNotes();
+    }
+
+    const addButton = document.createElement("button");
+    addButton.innerText = "+";
+    addButton.className = "add-button";
+    addButton.onclick = () => createNote();
+    container.appendChild(addButton);
+
+    notes.forEach(n => createNote(n.title, n.content, n.x, n.y));
+  </script>
+</body>
+</html>
